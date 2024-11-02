@@ -1,20 +1,17 @@
-// Entry-point for grammY Telegram Bot.
-
-import { run } from "@grammyjs/runner";
-import { Bot } from "grammy";
-import { loadConfig } from "~/config";
-
+import process from 'node:process'
+import { run } from '@grammyjs/runner'
+import { Bot } from 'grammy'
+import { loadConfig } from '~/common/config'
 
 async function main() {
   const config = loadConfig()
   const bot = new Bot(config.BOT_TOKEN)
 
   bot.command('start', async (ctx) => {
-    await ctx.react("👍")
+    await ctx.react('👍')
   })
 
   const runner = run(bot)
-
 
   const stopRunner = () => {
     if (runner.isRunning()) {

@@ -8,18 +8,20 @@
     "dev:api": "tsx watch --env-file=./.env ./apps/api.ts",
     "dev:bot": "tsx watch --env-file=./.env ./apps/bot.ts",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "deps": "taze -wI minor"
   },
   "dependencies": {
     "@grammyjs/runner": "^2.0.3",
-    "fastify": "^5.0.0",
-    "grammy": "^1.30.0",
+    "fastify": "^5.1.0",
+    "grammy": "^1.31.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.8.0",
-    "@types/node": "^22.8.2",
-    "eslint": "^9.12.0",
+    "@types/node": "^20.17.5",
+    "eslint": "^9.14.0",
+    "taze": "^0.18.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }
