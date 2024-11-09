@@ -1,26 +1,36 @@
 {
   "compilerOptions": {
     "target": "ES2022",
+    "jsx": "react-jsx",
+    "jsxImportSource": "@telegum/tgx",
     "lib": ["ES2023"],
-    "moduleDetection": "force",
-    "baseUrl": ".",
-    "module": "ESNext",
+    "moduleDetection": "auto",
+    "baseUrl": "./",
+    "module": "ES2022",
     "moduleResolution": "Bundler",
     "paths": {
       "~/*": ["./src/*"]
     },
-    "allowImportingTsExtensions": true,
     "strict": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noEmit": true,
+    "outDir": "dist",
+    "sourceMap": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "plugins": [
+      { "transform": "typescript-transform-paths" },
+    ]
   },
   "include": [
     "./**/*.js",
-    "./**/*.ts"
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules/**/*",
+    "dist/**/*"
   ]
 }

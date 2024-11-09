@@ -1,0 +1,50 @@
+x-enrypoing: &entrypoint
+  build:
+    context: .
+    dockerfile: Dockerfile
+  depends_on:
+    mongodb:
+      condition: service_healthy
+  networks:
+    - app
+  restart: always
+  env_file: .dev.env
+
+services:
+  mongodb:
+    container_name: mongo
+    image: mongo:8
+    volumes:
+      - data:/data/db
+    ports:
+      - 27017:27017
+    networks:
+      - app
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
+
+  api:
+    <<: *entrypoint
+    environment:
+      - PORT=3000
+    expose:
+      - "3000/tcp"
+    ports:
+      - 3000:3000
+    command: npm run prod:api
+  bot:
+    <<: *entrypoint
+    command: npm run prod:bot
+  tasks:
+    <<: *entrypoint
+    command: npm run prod:tasks
+
+volumes:
+  data:
+
+networks:
+  app:

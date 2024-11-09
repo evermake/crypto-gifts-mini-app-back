@@ -5,24 +5,45 @@
   "private": true,
   "scripts": {
     "typecheck": "tsc",
-    "dev:api": "tsx watch --env-file=./.env ./apps/api.ts",
-    "dev:bot": "tsx watch --env-file=./.env ./apps/bot.ts",
+    "build": "node scripts/build.js",
+    "dev:api": "tsx watch --env-file=./.dev.env ./src/api/main.ts",
+    "dev:bot": "tsx watch --env-file=./.dev.env ./src/bot/main.ts",
+    "dev:tasks": "tsx watch --env-file=./.dev.env ./src/tasks/main.ts",
+    "prod:api": "tsx ./src/api/main.ts",
+    "prod:bot": "tsx ./src/bot/main.ts",
+    "prod:tasks": "tsx ./src/tasks/main.ts",
+    "router-types": "tsc -p ./tsconfig.router.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "deps": "taze -wI minor"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.688.0",
+    "@fastify/cors": "^10.0.1",
+    "@grammyjs/auto-retry": "^2.0.2",
+    "@grammyjs/parse-mode": "^1.10.0",
     "@grammyjs/runner": "^2.0.3",
+    "@telegram-apps/init-data-node": "^1.1.1",
+    "@telegum/tgx": "^0.3.2",
+    "@trpc/server": "^11.0.0-rc.621",
     "fastify": "^5.1.0",
     "grammy": "^1.31.0",
+    "mongodb": "^6.10.0",
+    "pino": "^9.5.0",
+    "pino-pretty": "^12.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.8.0",
-    "@types/node": "^20.17.5",
+    "@types/node": "^20.17.6",
+    "esbuild": "^0.24.0",
+    "esbuild-plugin-pino": "^2.2.1",
     "eslint": "^9.14.0",
+    "eslint-plugin-format": "^0.1.2",
+    "rimraf": "^6.0.1",
     "taze": "^0.18.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "typescript-transform-paths": "^3.5.2"
   }
 }

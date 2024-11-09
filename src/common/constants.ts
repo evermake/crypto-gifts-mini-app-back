@@ -1,0 +1,8 @@
+import { T } from './utils'
+
+export const TMA_INIT_DATA_EXPIRE_SECONDS = 60 * 30 // 30 minutes
+export const CRYPTO_PAY_INVOICE_EXPIRE_SECONDS = 60 * 60 // 1 hour
+
+export const RECEIVE_GIFT_TOKEN_LIFETIME = 7 * T.Day
+export const INVALID_INLINE_QUERY_RESULT_CACHE_SECONDS = 15
+export const VALID_SEND_GIFT_INLINE_QUERY_RESULT_CACHE_SECONDS = 10
