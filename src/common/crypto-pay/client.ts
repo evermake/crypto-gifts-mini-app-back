@@ -5,7 +5,10 @@ export class CryptoPay {
   constructor(
     private baseUrl: string,
     private token: string,
-  ) {}
+  ) {
+    if (this.baseUrl.endsWith('/'))
+      this.baseUrl = this.baseUrl.slice(0, -1)
+  }
 
   getInvoices(options: {
     asset?: CryptoCurrency
@@ -43,7 +46,8 @@ export class CryptoPay {
   ): Promise<T> {
     let response
     try {
-      response = await fetch(new URL(method, this.baseUrl), {
+      response = await fetch(`${this.baseUrl}/${method}`, {
+        method: 'POST',
         body: payload == null
           ? undefined
           : JSON.stringify(payload),

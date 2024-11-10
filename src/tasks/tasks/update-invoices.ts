@@ -1,9 +1,9 @@
-import type { ObjectId } from 'mongodb'
 import type { Task, TaskContext } from '../types'
+import { ObjectId } from 'mongodb'
 import type { Asset } from '~/api/schemas'
 import type { Invoice } from '~/common/crypto-pay'
 import type { Gift, GiftKind } from '~/common/db/documents'
-import { assertDeletedCount, assertModifiedCount } from '~/common/db/utils'
+import { assertDeletedCount } from '~/common/db/utils'
 import { localeForUserLanguageCode } from '~/common/tg-user'
 import { num, T } from '~/common/utils'
 
@@ -26,10 +26,11 @@ const task: Task = async (ctx) => {
     )
     .toArray()
 
-  if (reservedGifts.length === 0) {
+  const N = reservedGifts.length
+  if (N === 0) {
     return {
       message: null,
-      repeatAfter: 1 * T.Sec,
+      repeatAfter: T.Sec,
     }
   }
 
@@ -38,7 +39,7 @@ const task: Task = async (ctx) => {
     const batch = reservedGifts.splice(0, CRYPTO_PAY_BATCH_SIZE)
 
     const { items: invoices } = await cryptoPay.getInvoices({
-      ids: reservedGifts.map(({ invoice }) => invoice.invoice_id),
+      ids: batch.map(({ invoice }) => invoice.invoice_id),
     })
 
     const pairs: [Gift, Invoice][] = []
@@ -65,8 +66,8 @@ const task: Task = async (ctx) => {
   }
 
   return {
-    message: `Updated ${reservedGifts.length} gifts (${Object.entries(stats).map(([x, n]) => `${x}:${n}`).join(',')}).`,
-    repeatAfter: 0,
+    message: `Updated ${N} gifts (${Object.entries(stats).map(([x, n]) => `${x}:${n}`).join(',')}).`,
+    repeatAfter: T.Sec,
   }
 }
 
@@ -100,7 +101,6 @@ async function processReservedGift(
             { $set: { invoice } },
             { session },
           )
-          assertModifiedCount(res.modifiedCount, 1)
 
           return 'pending'
         }
@@ -133,11 +133,10 @@ async function processReservedGift(
             },
             { session },
           )
-          assertModifiedCount(res.modifiedCount, 1)
 
           await db.giftActions.insertOne(
             {
-              _id: undefined as any,
+              _id: new ObjectId(),
               type: 'purchase',
               giftId: gift._id,
               date: invoice.paid_at ? new Date(invoice.paid_at) : new Date(),
@@ -147,10 +146,7 @@ async function processReservedGift(
                 amount: invoice.amount,
               },
             },
-            {
-              session,
-              forceServerObjectId: true,
-            },
+            { session },
           )
 
           purchaserIdToNotify = gift.purchaserId
@@ -174,7 +170,6 @@ async function processReservedGift(
             },
             { session },
           )
-          assertModifiedCount(res.modifiedCount, 1)
 
           return 'expired'
         }

@@ -133,17 +133,14 @@ export const appRouter = router({
 
             const insertResult = await ctx.db.gifts.insertOne(
               {
-                _id: undefined as any,
+                _id: new ObjectId(),
                 kindId,
                 sendToken: generateSendToken(),
                 status: 'reserved',
                 invoice,
                 purchaserId: ctx.user._id,
               },
-              {
-                session,
-                forceServerObjectId: true,
-              },
+              { session },
             )
 
             const updateResult = await ctx.db.giftKinds.updateOne(
@@ -178,7 +175,7 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const invalidTokenError = new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid or expired token.' })
 
-        if (!ObjectId.isValid(input.receiveToken))
+        if (!input.receiveToken)
           throw invalidTokenError
 
         let needToNotifyUsers = false
@@ -235,24 +232,22 @@ export const appRouter = router({
 
                 await ctx.db.giftActions.insertOne(
                   {
-                    _id: undefined as any,
+                    _id: new ObjectId(),
                     date: now,
                     type: 'sending',
                     giftId: updatedGift._id,
                     receiverId: updatedGift.receiverId,
                     senderId: updatedGift.purchaserId,
                   },
-                  {
-                    session,
-                    forceServerObjectId: true,
-                  },
+                  { session },
                 )
 
                 needToNotifyUsers = true
                 return updatedGift
               }
               case 'sent':
-                if (tokenGift.receiverId === ctx.user._id)
+                // Ok, attempt to receive again.
+                if (tokenGift.receiverId.equals(ctx.user._id))
                   return tokenGift
                 throw invalidTokenError
               default: throw new Error(`Unexpected token's gift status: "${tokenGift satisfies never}".`)
@@ -267,7 +262,7 @@ export const appRouter = router({
               sender,
               giftKind,
             ] = await Promise.all([
-              ctx.db.users.findOne({ _id: gift._id }),
+              ctx.db.users.findOne({ _id: gift.purchaserId }),
               ctx.db.giftKinds.findOne({ _id: gift.kindId }),
             ])
 
