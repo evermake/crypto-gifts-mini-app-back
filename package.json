@@ -12,6 +12,7 @@
     "prod:api": "tsx ./src/api/main.ts",
     "prod:bot": "tsx ./src/bot/main.ts",
     "prod:tasks": "tsx ./src/tasks/main.ts",
+    "prod:test-api": "tsx ./src/test-api/main.ts",
     "router-types": "tsc -p ./tsconfig.router.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

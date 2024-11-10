@@ -1,0 +1,65 @@
+x-enrypoing: &entrypoint
+  build:
+    context: .
+    dockerfile: Dockerfile
+  depends_on:
+    mongodb:
+      condition: service_healthy
+  networks:
+    - app
+  restart: always
+  env_file: .prod.env
+
+name: Gift App Production
+services:
+  mongodb:
+    image: mongo:8
+    command: --replSet rs0
+    volumes:
+      - data:/data/db
+    ports:
+      - 27017:27017
+    networks:
+      - app
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
+  
+  mongo-init:
+    image: mongo:8
+    restart: "no"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app
+    command: >
+      mongosh --host mongodb:27017 --eval
+      '
+      rs.initiate({
+         _id : "rs0",
+         members: [
+            { _id: 0, host: "127.0.0.1:27017" }
+         ]
+      })
+      '
+
+  test-api:
+    <<: *entrypoint
+    environment:
+      - LISTEN_PORT=3000
+      - LISTEN_HOST=0.0.0.0
+    expose:
+      - "3000/tcp"
+    ports:
+      - 3000:3000
+    command: npm run prod:test-api
+
+volumes:
+  data:
+
+networks:
+  app:
