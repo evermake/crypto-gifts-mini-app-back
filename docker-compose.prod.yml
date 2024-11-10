@@ -13,52 +13,32 @@ x-enrypoing: &entrypoint
 name: Gift App Production
 services:
   mongodb:
-    container_name: mongodb
     image: mongo:8
-    command: "mongod --replSet rs0 --keyFile /data/replica.key"
-    volumes:
-      - data:/data/db
-      - ./replica.key:/data/replica.key
+    environment:
+      MONGO_APP_DATABASE: ${MONGO_APP_DATABASE}
+      MONGO_REPLICA_HOST: host.docker.internal
+      MONGO_REPLICA_PORT: 27018
+    entrypoint: >
+      /bin/bash -c '
+      echo "rs.initiate()" > /docker-entrypoint-initdb.d/1-init-replicaset.js &&
+      echo "db = db.getSiblingDB(process.env[$0]);" > /docker-entrypoint-initdb.d/2-init-db-collection.js &&
+      echo "db.createCollection($1, { capped: false });" >> /docker-entrypoint-initdb.d/2-init-db-collection.js &&
+      echo "db.init.insert([{ message: $2 }]);" >> /docker-entrypoint-initdb.d/2-init-db-collection.js &&
+      /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --bind_ip_all --noauth' "'MONGO_APP_DATABASE'" "'init'" "'db initialized successfully'"
     ports:
       - 127.0.0.1:27017:27017
     networks:
       app:
         ipv4_address: 192.168.123.2
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - data:/data/db
+    restart: unless-stopped
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 10s
       timeout: 3s
       retries: 5
       start_period: 60s
-    entrypoint:
-      - bash
-      - -c
-      - |
-          chmod 400 /data/replica.key
-          chown 999:999 /data/replica.key
-          exec docker-entrypoint.sh $$@
-  
-  mongo-init:
-    image: mongo:8
-    restart: "no"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    networks:
-      - app
-    command: >
-      mongosh --host mongodb:27017 --eval
-      '
-      rs.initiate({
-         _id : "rs0",
-         members: [
-            { _id: 0, host: "127.0.0.1:27017" }
-         ]
-      })
-      '
 
   test-api:
     <<: *entrypoint
@@ -74,6 +54,7 @@ services:
 
 volumes:
   data:
+    name: data
 
 networks:
   app:
