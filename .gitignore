@@ -4,5 +4,8 @@ node_modules
 !.docker.env
 dist
 
+# used by mongo replica set
+replica.key
+
 # TODO: Remove this when will be merged to monorepo with frontend.
 router.d.ts
