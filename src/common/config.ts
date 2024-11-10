@@ -3,7 +3,8 @@ import { z } from 'zod'
 
 const Config = z.object({
   ENVIRONMENT: z.enum(['dev', 'prod']),
-  PORT: z.coerce.number().int().default(3000),
+  LISTEN_PORT: z.coerce.number().int().default(3000),
+  LISTEN_HOST: z.string().default('127.0.0.1'),
   CORS_ALLOWED_ORIGINS: z.preprocess(i => (i as string).split(','), z.array(z.string())).default([]),
   BOT_TOKEN: z.string().min(1),
   MONGO_URL: z.string().min(1),

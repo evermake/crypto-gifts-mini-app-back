@@ -132,10 +132,9 @@ async function main() {
   }
 
   await fastify.listen({
-    host: '0.0.0.0',
-    port: config.PORT,
+    host: config.LISTEN_HOST,
+    port: config.LISTEN_PORT,
   })
-  fastify.log.info(`Listening on ${config.PORT}.`)
 
   process.on('SIGINT', stop)
   process.on('SIGTERM', stop)
