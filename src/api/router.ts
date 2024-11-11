@@ -303,12 +303,48 @@ export const appRouter = router({
 
         return giftDocumentToSentGift(gift, ctx.logger)
       }),
+
+  // TODO: Paginate.
+  userGifts:
+    miniAppProcedure
+      .input(z.union([
+        z.object({ my: z.literal(true) }),
+        z.object({ my: z.literal(false).optional(), userId: z.string() }),
+      ]))
+      .output(z.array(SentGiftOut))
+      .query(async ({ ctx, input }) => {
+        const userId = input.my === true
+          ? ctx.user._id
+          : input.userId
+
+        return await ctx.db
+          .gifts
+          .find(
+            {
+              status: 'sent',
+              receiverId: userId,
+            },
+            {
+              sort: [['sentAt', 'desc']],
+            },
+          )
+          .map(doc => giftDocumentToSentGift(doc, ctx.logger))
+          .toArray()
+      }),
+
+  // TODO
+  myActions:
+    miniAppProcedure
+      .query(async () => {
+        throw new TRPCError({ code: 'NOT_IMPLEMENTED' })
+      }),
 })
 
 function userDocumentToUserOut(doc: User): UserOut {
   return {
     id: doc._id.toString(),
     name: doc.name,
+    isPremium: doc.tg.hasPremium,
     receivedGiftsCount: doc.receivedGiftsCount,
   }
 }

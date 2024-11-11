@@ -41,5 +41,6 @@ export type UserOut = z.infer<typeof UserOut>
 export const UserOut = z.object({
   id: z.string(),
   name: z.string(),
+  isPremium: z.boolean(),
   receivedGiftsCount: z.number(),
 })
