@@ -27,9 +27,11 @@ export async function getReceiveTokenForGift(
     { giftId },
     {
       $set: {
-        _id: generateReceiveToken(),
         giftId,
         issuedAt: new Date(),
+      },
+      $setOnInsert: {
+        _id: generateReceiveToken(),
       },
     },
     {
