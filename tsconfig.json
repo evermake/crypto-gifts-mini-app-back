@@ -21,7 +21,7 @@
     "skipLibCheck": true,
     "noUncheckedSideEffectImports": true,
     "plugins": [
-      { "transform": "typescript-transform-paths" },
+      { "transform": "typescript-transform-paths" }
     ]
   },
   "include": [
