@@ -40,9 +40,8 @@ services:
       retries: 5
       start_period: 60s
 
-  test-api:
+  api:
     <<: *entrypoint
-    container_name: test-api
     environment:
       - LISTEN_PORT=3000
       - LISTEN_HOST=0.0.0.0
@@ -50,7 +49,13 @@ services:
       - "3000/tcp"
     ports:
       - 127.0.0.1:3000:3000
-    command: npm run prod:test-api
+    command: npm run prod:api
+  bot:
+    <<: *entrypoint
+    command: npm run prod:bot
+  tasks:
+    <<: *entrypoint
+    command: npm run prod:tasks
 
 volumes:
   data:
