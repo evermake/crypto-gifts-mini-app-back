@@ -164,7 +164,7 @@ export const appRouter = router({
 
         return {
           giftId: gift._id.toString(),
-          purchaseLink: gift.invoice.web_app_invoice_url,
+          purchaseLink: gift.invoice.mini_app_invoice_url,
         }
       }),
 
