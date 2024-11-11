@@ -24,6 +24,6 @@ jobs:
           SSH_KEY_PATH: ${{ github.workspace }}/../private.key
 
       - name: Login into remote
-        run: ssh -i $SSH_KEY_PATH user@45.10.41.230 'cd /home/user/apps/crypto-gifts-mini-app-back && make stop-prod && git pull && make start-prod'
+        run: ssh -i -A $SSH_KEY_PATH user@45.10.41.230 'cd /home/user/apps/crypto-gifts-mini-app-back && make stop-prod && git pull && make start-prod'
         env:
           SSH_KEY_PATH: ${{ github.workspace }}/../private.key
