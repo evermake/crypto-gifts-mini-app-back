@@ -1,7 +1,7 @@
 import type { Ctx } from './context'
 import process from 'node:process'
 import { run } from '@grammyjs/runner'
-import { Bot } from 'grammy'
+import { Bot, GrammyError, HttpError } from 'grammy'
 import pino from 'pino'
 import { loadConfig } from '~/common/config'
 import { initMongo } from '~/common/db/mongo'
@@ -15,6 +15,18 @@ async function main() {
   const logger = pino(pinoOptionsForEnv(config.ENVIRONMENT))
   const db = await initMongo(config.MONGO_URL, logger)
   const bot = new Bot<Ctx>(config.BOT_TOKEN)
+
+  bot.catch(({ error, ctx }) => {
+    if (error instanceof GrammyError) {
+      logger.error(error, `Failed to call Telegram API method.`, { update: ctx.update })
+    }
+    else if (error instanceof HttpError) {
+      logger.error(error, `Network error calling Telegram API method.`, { update: ctx.update })
+    }
+    else {
+      logger.error(error, `Error occurred while processing update.`, { update: ctx.update })
+    }
+  })
 
   // Provide context.
   bot.use((ctx, next) => {
