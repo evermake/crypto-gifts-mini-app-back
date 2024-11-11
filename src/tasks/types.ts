@@ -1,3 +1,4 @@
+import type { Config } from 'common/config'
 import type { Api } from 'grammy'
 import type { CryptoPay } from '~/common/crypto-pay'
 import type { Database } from '~/common/db/mongo'
@@ -8,6 +9,7 @@ export type TaskContext = {
   tgApi: Api
   db: Database
   cryptoPay: CryptoPay
+  config: Config
 }
 
 export type TaskResult = {

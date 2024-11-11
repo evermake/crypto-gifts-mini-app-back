@@ -9,6 +9,7 @@ import type { Logger } from '~/common/logging'
 import { extractTmaInitData } from './auth'
 
 export type Context = {
+  config: Config
   logger: Logger
   db: Database
   cryptoPay: CryptoPay
@@ -33,6 +34,7 @@ export function contextBuilder({
       logger: req.log,
       db,
       cryptoPay,
+      config,
       tgApi,
       t: en,
       tmaInitData: extractTmaInitData(req, config.BOT_TOKEN),

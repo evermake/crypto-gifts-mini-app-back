@@ -74,7 +74,7 @@ const task: Task = async (ctx) => {
 async function processReservedGift(
   id: ObjectId,
   invoice: Invoice,
-  { db, tgApi, logger }: TaskContext,
+  { db, tgApi, logger, config }: TaskContext,
 ): Promise<'pending' | 'paid' | 'expired'> {
   let purchaserIdToNotify = null as ObjectId | null
   let purchasedGiftKind = null as GiftKind | null
@@ -185,11 +185,22 @@ async function processReservedGift(
       if (!user)
         throw new Error('User is not found.')
 
+      const locale = localeForUserLanguageCode(user.tg.languageCode)
       await tgApi.sendMessage(
         num(user.tg.id),
-        localeForUserLanguageCode(user.tg.languageCode)
+        locale
           .notifications
           .youPurchasedGift(purchasedGiftKind.name),
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{
+                text: locale.buttons.openGifts,
+                web_app: { url: `${config.MINI_APP_URL}/gifts` },
+              }],
+            ],
+          },
+        },
       )
     })().catch(err => logger.error(err, `Failed to notify purchaser (${purchaserIdToNotify}) about the purchased gift (${id}).`))
   }

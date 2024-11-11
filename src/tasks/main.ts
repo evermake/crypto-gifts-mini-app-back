@@ -22,6 +22,7 @@ async function main() {
   const logger = pino(pinoOptionsForEnv(config.ENVIRONMENT))
 
   const ctx: TaskContext = {
+    config,
     db: await initMongo(config.MONGO_URL, logger),
     logger,
     tgApi: installTransformers(new Api(config.BOT_TOKEN)),

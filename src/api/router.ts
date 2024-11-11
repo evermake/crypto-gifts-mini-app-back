@@ -272,6 +272,7 @@ export const appRouter = router({
             if (!giftKind)
               throw new Error('Gift kind is not found')
 
+            const senderLocale = localeForUserLanguageCode(sender.tg.languageCode)
             const [
               receiverNotificationResult,
               senderNotificationResult,
@@ -282,15 +283,35 @@ export const appRouter = router({
                   giftName: giftKind.name,
                   senderName: sender.name,
                 }),
+                {
+                  reply_markup: {
+                    inline_keyboard: [
+                      [{
+                        text: ctx.t.buttons.viewGift,
+                        web_app: { url: `${ctx.config.MINI_APP_URL}/profile` },
+                      }],
+                    ],
+                  },
+                },
               ),
               ctx.tgApi.sendMessage(
                 num(sender.tg.id),
-                localeForUserLanguageCode(sender.tg.languageCode)
+                senderLocale
                   .notifications
                   .yourGiftReceived({
                     giftName: giftKind.name,
                     recipientName: ctx.user.name,
                   }),
+                {
+                  reply_markup: {
+                    inline_keyboard: [
+                      [{
+                        text: senderLocale.buttons.openApp,
+                        web_app: { url: ctx.config.MINI_APP_URL },
+                      }],
+                    ],
+                  },
+                },
               ),
             ])
 
