@@ -13,19 +13,9 @@ jobs:
 
       - name: Create SSH key
         run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_PRIVATE_KEY" > ../private.key
-          sudo chmod 600 ../private.key
-          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          eval `ssh-agent -s`
-          ssh-add ../private.key
-        shell: bash
-        env:
-          SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
-          SSH_KNOWN_HOSTS: ${{secrets.SSH_KNOWN_HOSTS}}
-          SSH_KEY_PATH: ${{ github.workspace }}/../private.key
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
       - name: Login into remote
-        run: ssh -A -i $SSH_KEY_PATH user@45.10.41.230 'cd /home/user/apps/crypto-gifts-mini-app-back && make stop-prod && git pull && make start-prod'
-        env:
-          SSH_KEY_PATH: ${{ github.workspace }}/../private.key
+        run: ssh -A user@45.10.41.230 'cd /home/user/apps/crypto-gifts-mini-app-back && make stop-prod && git pull && make start-prod'
