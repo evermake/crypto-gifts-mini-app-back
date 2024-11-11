@@ -27,11 +27,6 @@ async function main() {
   const tgApi = installTransformers(new Api(config.BOT_TOKEN))
   const cryptoPay = new CryptoPay(config.CRYPTO_PAY_BASE_URL, config.CRYPTO_PAY_TOKEN)
 
-  let resolveServerStopped = (_?: any) => {}
-  const stopPromise = new Promise((res) => {
-    resolveServerStopped = res
-  })
-
   fastify.register(cors, {
     origin: config.CORS_ALLOWED_ORIGINS,
   })
@@ -41,8 +36,13 @@ async function main() {
     trpcOptions: {
       router: appRouter,
       createContext: contextBuilder({ db, config, cryptoPay, tgApi }),
-      onError: ({ path, error }) => {
-        fastify.log.error(error, `Error in tRPC handler on path '${path}'.`)
+      onError: ({ path, error, input }) => {
+        if (error.code === 'INTERNAL_SERVER_ERROR') {
+          fastify.log.error(error, `[${path}] Internal error in tRPC handler.`, { input })
+        }
+        else {
+          fastify.log.warn(error, `[${path}] Error in tRPC handler.`)
+        }
       },
     } satisfies FastifyTRPCPluginOptions<AppRouter>['trpcOptions'],
   })
@@ -121,6 +121,11 @@ async function main() {
     }
   })
 
+  // Graceful shutdown.
+  let resolveServerStopped = (_?: any) => {}
+  const stopPromise = new Promise((res) => {
+    resolveServerStopped = res
+  })
   const stopping = false
   const stop = () => {
     fastify.log.info('Received signal. Stopping...')
