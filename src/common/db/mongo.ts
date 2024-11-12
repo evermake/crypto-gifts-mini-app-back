@@ -34,6 +34,10 @@ export async function initMongo(url: string, logger: Logger) {
       unique: true,
     },
   )
+  await users.createIndex(
+    { receivedGiftsCount: -1 }, // Users with more gifts are higher.
+    { name: 'gifts_ranking' },
+  )
 
   return {
     client,

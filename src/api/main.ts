@@ -53,7 +53,7 @@ async function main() {
 
   // TODO: Move it to a better place.
   fastify.get('/avatars/:userId', async (req, res) => {
-    const rawUserId = (req.params as { userId?: string }).userId
+    let rawUserId = (req.params as { userId?: string }).userId
 
     const sendNoAvatar = () => {
       res
@@ -69,6 +69,10 @@ async function main() {
         .status(200)
         .send(data)
     }
+
+    const jpegMath = /(.+)\.jpe?g$/i.exec(rawUserId ?? '')
+    if (jpegMath)
+      rawUserId = jpegMath[1]
 
     if (!rawUserId || !ObjectId.isValid(rawUserId)) {
       sendNoAvatar()

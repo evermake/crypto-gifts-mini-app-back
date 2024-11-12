@@ -23,6 +23,7 @@ export const SentGiftOut = z.object({
   id: z.string(),
   kindId: z.string(),
   order: z.number(),
+  senderId: z.string(),
   purchasePrice: Price,
   sentAt: z.date(),
 })
@@ -50,4 +51,11 @@ export const UserOut = z.object({
   name: z.string(),
   isPremium: z.boolean(),
   receivedGiftsCount: z.number(),
+  rank: z.number(),
+})
+
+export type Pagination = z.infer<typeof Pagination>
+export const Pagination = z.object({
+  offset: z.number().int().min(0).default(0),
+  limit: z.number().int().min(1).max(100).default(50),
 })

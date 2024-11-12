@@ -2,7 +2,10 @@ import type { Asset, Price } from './schemas'
 import { TRPCError } from '@trpc/server'
 import { ObjectId } from 'mongodb'
 import { z } from 'zod'
-import { CRYPTO_PAY_INVOICE_EXPIRE_SECONDS, RECEIVE_GIFT_TOKEN_LIFETIME } from '~/common/constants'
+import {
+  CRYPTO_PAY_INVOICE_EXPIRE_SECONDS,
+  RECEIVE_GIFT_TOKEN_LIFETIME,
+} from '~/common/constants'
 import type { Invoice } from '~/common/crypto-pay'
 import type { Gift, User } from '~/common/db/documents'
 import { assertModifiedCount } from '~/common/db/utils'
@@ -10,7 +13,14 @@ import { generateSendToken } from '~/common/gift-tokens'
 import type { Logger } from '~/common/logging'
 import { localeForUserLanguageCode } from '~/common/tg-user'
 import { num } from '~/common/utils'
-import { GiftKindOut, GiftStatus, SendableGiftOut, SentGiftOut, UserOut } from './schemas'
+import {
+  GiftKindOut,
+  GiftStatus,
+  Pagination,
+  SendableGiftOut,
+  SentGiftOut,
+  UserOut,
+} from './schemas'
 import { miniAppProcedure, router } from './trpc'
 
 export type AppRouter = typeof appRouter
@@ -20,7 +30,13 @@ export const appRouter = router({
     miniAppProcedure
       .output(UserOut)
       .query(async ({ ctx }) => {
-        return userDocumentToUserOut(ctx.user)
+        const usersWithMoreGifts = await ctx.db.users.countDocuments({
+          receivedGiftsCount: { $gt: ctx.user.receivedGiftsCount },
+        })
+        return userDocumentWithRankToUserOut({
+          ...ctx.user,
+          rank: usersWithMoreGifts + 1,
+        })
       }),
 
   user:
@@ -35,7 +51,14 @@ export const appRouter = router({
         const doc = await ctx.db.users.findOne({ _id: new ObjectId(input.userId) })
         if (!doc)
           throw notFoundError
-        return userDocumentToUserOut(doc)
+
+        const usersWithMoreGifts = await ctx.db.users.countDocuments({
+          receivedGiftsCount: { $gt: doc.receivedGiftsCount },
+        })
+        return userDocumentWithRankToUserOut({
+          ...doc,
+          rank: usersWithMoreGifts + 1,
+        })
       }),
 
   giftKinds:
@@ -352,9 +375,16 @@ export const appRouter = router({
       ]))
       .output(z.array(SentGiftOut))
       .query(async ({ ctx, input }) => {
-        const userId = input.my === true
-          ? ctx.user._id
-          : input.userId
+        let userId
+        if (input.my) {
+          userId = ctx.user._id
+        }
+        else if (ObjectId.isValid(input.userId)) {
+          userId = new ObjectId(input.userId)
+        }
+        else {
+          throw new TRPCError({ code: 'NOT_FOUND' })
+        }
 
         return await ctx.db
           .gifts
@@ -377,14 +407,37 @@ export const appRouter = router({
       .query(async () => {
         throw new TRPCError({ code: 'NOT_IMPLEMENTED' })
       }),
+
+  leaderboard:
+    miniAppProcedure
+      .input(Pagination)
+      .output(z.array(UserOut))
+      .query(async ({ ctx, input }) => {
+        const result = await ctx.db.users.aggregate<User & { rank: number }>([
+          { $sort: { receivedGiftsCount: -1 } },
+          {
+            $setWindowFields: {
+              sortBy: { receivedGiftsCount: -1 },
+              output: {
+                rank: { $rank: {} },
+              },
+            },
+          },
+          { $skip: input.offset },
+          { $limit: input.limit },
+        ]).toArray()
+
+        return result.map(userDocumentWithRankToUserOut)
+      }),
 })
 
-function userDocumentToUserOut(doc: User): UserOut {
+function userDocumentWithRankToUserOut(doc: User & { rank: number }): UserOut {
   return {
     id: doc._id.toString(),
     name: doc.name,
     isPremium: doc.tg.hasPremium,
     receivedGiftsCount: doc.receivedGiftsCount,
+    rank: doc.rank,
   }
 }
 
@@ -410,6 +463,7 @@ function giftDocumentToSentGift(doc: Gift, logger: Logger): SentGiftOut {
     kindId: doc.kindId.toString(),
     order: doc.order,
     sentAt: doc.sentAt,
+    senderId: doc.purchaserId.toString(),
     purchasePrice: priceFromInvoice(doc.invoice, logger),
   }
 }
