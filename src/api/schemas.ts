@@ -37,6 +37,13 @@ export const SendableGiftOut = z.object({
   sendToken: z.string(),
 })
 
+export type GiftStatus = z.infer<typeof GiftStatus>
+export const GiftStatus = z.union([
+  z.object({ status: z.literal('pending') }),
+  z.object({ status: z.literal('purchased'), gift: SendableGiftOut }),
+  z.object({ status: z.literal('sent'), gift: SentGiftOut }),
+])
+
 export type UserOut = z.infer<typeof UserOut>
 export const UserOut = z.object({
   id: z.string(),

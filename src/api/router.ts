@@ -10,8 +10,8 @@ import { generateSendToken } from '~/common/gift-tokens'
 import type { Logger } from '~/common/logging'
 import { localeForUserLanguageCode } from '~/common/tg-user'
 import { num } from '~/common/utils'
-import { GiftKindOut, SendableGiftOut, SentGiftOut, UserOut } from './schemas'
-import { miniAppProcedure, publicProcedure, router } from './trpc'
+import { GiftKindOut, GiftStatus, SendableGiftOut, SentGiftOut, UserOut } from './schemas'
+import { miniAppProcedure, router } from './trpc'
 
 export type AppRouter = typeof appRouter
 
@@ -66,12 +66,30 @@ export const appRouter = router({
           .toArray()
       }),
 
-  gift:
-    publicProcedure
+  myGiftStatus:
+    miniAppProcedure
       .input(z.object({ giftId: z.string() }))
-      .output(SentGiftOut)
-      .query(async () => {
-        throw new TRPCError({ code: 'NOT_IMPLEMENTED' })
+      .output(GiftStatus)
+      .query(async ({ ctx, input }) => {
+        if (!ObjectId.isValid(input.giftId))
+          throw new TRPCError({ code: 'NOT_FOUND' })
+
+        const gift = await ctx.db.gifts.findOne({ _id: new ObjectId(input.giftId) })
+
+        if (!gift || !gift.purchaserId.equals(ctx.user._id))
+          throw new TRPCError({ code: 'NOT_FOUND' })
+
+        switch (gift.status) {
+          case 'reserved':
+            return { status: 'pending' }
+          case 'purchased':
+            return { status: 'purchased', gift: giftDocumentToSendableGift(gift, ctx.logger) }
+          case 'sent':
+            return { status: 'sent', gift: giftDocumentToSentGift(gift, ctx.logger) }
+          default:
+            ctx.logger.error(`Unexpected gift status.`, { gift: gift satisfies never })
+            throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' })
+        }
       }),
 
   requestPurchaseGift:
